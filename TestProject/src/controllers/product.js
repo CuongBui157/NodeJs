@@ -1,4 +1,10 @@
 import Product from "../model/product"
+import Joi from "joi"
+
+const productSchema = Joi.object({
+    name: Joi.string().required(),
+    price: Joi.number()
+})
 
 export const get = async (req, res) => {
     try {
@@ -32,18 +38,18 @@ export const getById = async (req, res) => {
 export const create = async (req, res) => {
     try {
         const body = req.body
-        const data = await Product.create(body)
-        if (data) {
+        const { error } = productSchema.validate(body)
+        if (error) {
+            res.status(400).send({
+                message: error.message,
+            })
+        } else {
+            const data = await Product.create(body)
             res.send({
                 message: "Create products successfully",
                 data: data
             })
-        } else {
-            res.status(400).send({
-                message: "Error"
-            })
         }
-
     } catch (error) {
         res.status(500).send({
             message: error
@@ -55,18 +61,24 @@ export const update = async (req, res) => {
     try {
         const id = req.params.id
         const body = req.body
-        const data = await Product.findByIdAndUpdate(id, body)
-        if (data) {
-            res.send({
-                message: "Update products successfully",
-                data: data
+        const { error } = productSchema.validate(body)
+        if (error) {
+            res.status(400).send({
+                message: error.message,
             })
         } else {
-            res.status(400).send({
-                message: "Product is not existed"
-            })
+            const data = await Product.findByIdAndUpdate(id, body)
+            if (data) {
+                res.send({
+                    message: "Update products successfully",
+                    data: data
+                })
+            } else {
+                res.status(400).send({
+                    message: "Product is not existed"
+                })
+            }
         }
-
     } catch (error) {
         res.status(500).send({
             message: error
